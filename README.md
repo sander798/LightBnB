@@ -1,5 +1,17 @@
 # LightBnB
 
+A simple Airbnb clone created to learn SQL. It uses Javascript paired with SQL queries to display listings available for use along with some basic property features like the number of bedrooms and average rating. A user may log in or be created, see their own listings and reservations, and create new listings. A search function to filter through all properties is also provided.
+
+## Usage
+
+1. Install dependencies: ```npm i```
+
+2. Populate a database named ```lightbnb``` using the migration and then seed SQL files provided.
+
+3. Run the server with ```npm run local```
+
+4. View ```localhost:3000``` in your web browser.
+
 ## Project Structure
 
 ```
