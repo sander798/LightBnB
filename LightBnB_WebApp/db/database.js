@@ -82,7 +82,7 @@ const getAllReservations = function (guest_id, limit = 10) {
       JOIN properties ON properties.id = reservations.property_id
       JOIN property_reviews ON properties.id = property_reviews.property_id
       WHERE reservations.guest_id = $1
-      GROUP BY reservations.id, properties.title, cost_per_night
+      GROUP BY reservations.id, properties.id, properties.title, cost_per_night
       ORDER BY start_date ASC
       LIMIT $2;`,
       [`${guest_id}`, `${limit}`]
@@ -104,8 +104,61 @@ const getAllReservations = function (guest_id, limit = 10) {
  * @return {Promise<[{}]>}  A promise to the properties.
  */
 const getAllProperties = function (options, limit = 10) {
+  const queryParams = [];
+  
+  let queryString = `SELECT properties.*, AVG(property_reviews.rating) as average_rating
+    FROM properties
+    JOIN property_reviews ON properties.id = property_id `;
+    
+    /*WHERE city LIKE '%$1%'
+      AND owner_id LIKE '%$2%'
+    GROUP BY properties.id
+    HAVING AVG(rating) >= 4
+    ORDER BY cost_per_night ASC
+    LIMIT $6;`;*/
+  
+  if (options.city) {
+    queryParams.push(`%${options.city}%`);
+    queryString += `WHERE city LIKE $${queryParams.length} `;
+  }
+  
+  if (options.owner_id) {
+    queryParams.push(`${options.owner_id}`);
+    // Add "AND " if not first WHERE
+    queryString.includes("WHERE") ? queryString += `AND ` : null;
+    queryString += `WHERE owner_id = $${queryParams.length} `;
+  }
+  
+  if (options.minimum_price_per_night) {
+    queryParams.push(`${options.minimum_price_per_night}`);
+    queryString.includes("WHERE") ? queryString += `AND ` : null;
+    queryString += `WHERE cost_per_night >= $${queryParams.length} `;
+  }
+  
+  if (options.maximum_price_per_night) {
+    queryParams.push(`${options.maximum_price_per_night}`);
+    queryString.includes("WHERE") ? queryString += `AND ` : null;
+    queryString += `WHERE cost_per_night <= $${queryParams.length} `;
+  }
+  
+  queryString += `GROUP BY properties.id `;
+  
+  if (options.minimum_rating) {
+    queryParams.push(`${options.minimum_rating}`);
+    queryString.includes("WHERE") ? queryString += `AND ` : null;
+    queryString += `HAVING AVG(rating) >= $${queryParams.length} `;
+  } else {
+    queryString += `HAVING AVG(rating) >= 0 `;
+  }
+  
+  queryParams.push(`${limit}`);
+  queryString += `
+    ORDER BY cost_per_night
+    LIMIT $${queryParams.length};
+  `;
+  
   return pool
-    .query(`SELECT * FROM properties LIMIT $1;`, [limit])
+    .query(queryString, queryParams)
     .then((result) => {
       return result.rows;
     })
