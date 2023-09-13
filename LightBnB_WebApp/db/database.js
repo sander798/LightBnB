@@ -55,8 +55,8 @@ const addUser = function (user) {
   return pool
     .query(`INSERT INTO users (name, email, password) 
       VALUES ($1, $2, $3)
-      RETURNING *;`,
-    [`${user.name}`, `${user.email}`, `${user.password}`])
+      RETURNING *;
+    `, [`${user.name}`, `${user.email}`, `${user.password}`])
     .then((result) => {
       return result.rows[0];
     })
@@ -84,9 +84,8 @@ const getAllReservations = function (guest_id, limit = 10) {
       WHERE reservations.guest_id = $1
       GROUP BY reservations.id, properties.id, properties.title, cost_per_night
       ORDER BY start_date ASC
-      LIMIT $2;`,
-      [`${guest_id}`, `${limit}`]
-    )
+      LIMIT $2;
+    `, [`${guest_id}`, `${limit}`])
     .then((result) => {
       return result.rows;
     })
@@ -106,9 +105,11 @@ const getAllReservations = function (guest_id, limit = 10) {
 const getAllProperties = function (options, limit = 10) {
   const queryParams = [];
   
-  let queryString = `SELECT properties.*, AVG(property_reviews.rating) as average_rating
+  let queryString = `
+    SELECT properties.*, AVG(property_reviews.rating) as average_rating
     FROM properties
-    JOIN property_reviews ON properties.id = property_id `;
+    JOIN property_reviews ON properties.id = property_id
+  `;
   
   if (options.city) {
     queryParams.push(`%${options.city}%`);
