@@ -109,13 +109,6 @@ const getAllProperties = function (options, limit = 10) {
   let queryString = `SELECT properties.*, AVG(property_reviews.rating) as average_rating
     FROM properties
     JOIN property_reviews ON properties.id = property_id `;
-    
-    /*WHERE city LIKE '%$1%'
-      AND owner_id LIKE '%$2%'
-    GROUP BY properties.id
-    HAVING AVG(rating) >= 4
-    ORDER BY cost_per_night ASC
-    LIMIT $6;`;*/
   
   if (options.city) {
     queryParams.push(`%${options.city}%`);
@@ -124,31 +117,28 @@ const getAllProperties = function (options, limit = 10) {
   
   if (options.owner_id) {
     queryParams.push(`${options.owner_id}`);
-    // Add "AND " if not first WHERE
-    queryString.includes("WHERE") ? queryString += `AND ` : null;
-    queryString += `WHERE owner_id = $${queryParams.length} `;
+    // Add "AND " if not first WHERE, else "WHERE "
+    queryString.includes("WHERE") ? queryString += `AND ` : queryString += `WHERE `;
+    queryString += `owner_id = $${queryParams.length} `;
   }
   
   if (options.minimum_price_per_night) {
     queryParams.push(`${options.minimum_price_per_night}`);
-    queryString.includes("WHERE") ? queryString += `AND ` : null;
-    queryString += `WHERE cost_per_night >= $${queryParams.length} `;
+    queryString.includes("WHERE") ? queryString += `AND ` : queryString += `WHERE `;
+    queryString += `cost_per_night >= $${queryParams.length} `;
   }
   
   if (options.maximum_price_per_night) {
     queryParams.push(`${options.maximum_price_per_night}`);
-    queryString.includes("WHERE") ? queryString += `AND ` : null;
-    queryString += `WHERE cost_per_night <= $${queryParams.length} `;
+    queryString.includes("WHERE") ? queryString += `AND ` : queryString += `WHERE `;
+    queryString += `cost_per_night <= $${queryParams.length} `;
   }
   
   queryString += `GROUP BY properties.id `;
   
   if (options.minimum_rating) {
     queryParams.push(`${options.minimum_rating}`);
-    queryString.includes("WHERE") ? queryString += `AND ` : null;
     queryString += `HAVING AVG(rating) >= $${queryParams.length} `;
-  } else {
-    queryString += `HAVING AVG(rating) >= 0 `;
   }
   
   queryParams.push(`${limit}`);
